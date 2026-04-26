@@ -1,0 +1,25 @@
+spring.application.name=liftrr-backend
+
+# --- Database ---
+spring.datasource.url=jdbc:h2:mem:liftrrdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+spring.datasource.driver-class-name=org.h2.Driver
+spring.datasource.username=sa
+spring.datasource.password=
+spring.jpa.database-platform=org.hibernate.dialect.H2Dialect
+spring.jpa.hibernate.ddl-auto=update
+
+# --- JWT ---
+# Generate with: openssl rand -base64 64
+jwt.secret=
+jwt.expiration-ms=900000
+jwt.refresh-expiration-ms=604800000
+
+# --- Google OAuth2 ---
+google.client-id=
+
+# --- Cloudflare R2 ---
+r2.account-id=
+r2.access-key=
+r2.secret-key=
+r2.bucket=
+r2.public-url=

@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(./gradlew bootRun:*)",
+      "Bash(env:*)",
+      "Bash(brew services:*)",
+      "Bash(kill %1:*)",
+      "Bash(echo:*)",
+      "Bash(printenv:*)",
+      "Bash(ls:*)",
+      "Bash(xargs cat:*)",
+      "Bash(psql:*)",
+      "mcp__serena__initial_instructions",
+      "mcp__serena__check_onboarding_performed",
+      "Bash(git init *)",
+      "Bash(git add *)",
+      "Bash(git rm *)"
+    ]
+  },
+  "prefersReducedMotion": true
+}
