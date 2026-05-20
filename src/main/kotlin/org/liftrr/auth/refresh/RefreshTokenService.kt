@@ -1,13 +1,14 @@
 package org.liftrr.auth.refresh
 
+import org.liftrr.common.ExpiredRefreshTokenException
+import org.liftrr.common.InvalidRefreshTokenException
+import org.liftrr.common.ReplayedRefreshTokenException
 import org.liftrr.user.User
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import org.springframework.web.server.ResponseStatusException
 import java.time.Instant
-import java.util.UUID
+import java.util.*
 
 @Service
 class RefreshTokenService(
@@ -30,18 +31,17 @@ class RefreshTokenService(
     @Transactional
     fun rotate(rawToken: String): RefreshToken {
         val existing = refreshTokenRepository.findByToken(rawToken)
-            ?: throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Refresh token not found")
+            ?: throw InvalidRefreshTokenException()
 
         if (existing.revoked) {
-            // Token was already used — possible replay attack; revoke all tokens for this user
-            refreshTokenRepository.revokeAllForUser(existing.user.id)
-            throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Refresh token already used")
+            existing.user.id?.let { refreshTokenRepository.revokeAllForUser(it) }
+            throw ReplayedRefreshTokenException()
         }
 
         if (existing.expiresAt.isBefore(Instant.now())) {
             existing.revoked = true
             refreshTokenRepository.save(existing)
-            throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Refresh token expired")
+            throw ExpiredRefreshTokenException()
         }
 
         existing.revoked = true

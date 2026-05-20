@@ -7,5 +7,5 @@ import org.springframework.boot.runApplication
 class LiftrrBackendApplication
 
 fun main(args: Array<String>) {
-	runApplication<LiftrrBackendApplication>(*args)
+    runApplication<LiftrrBackendApplication>(*args)
 }

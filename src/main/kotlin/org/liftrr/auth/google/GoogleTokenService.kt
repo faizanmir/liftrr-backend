@@ -1,16 +1,19 @@
 package org.liftrr.auth.google
 
-import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier
-import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport
-import com.google.api.client.json.gson.GsonFactory
-import org.springframework.beans.factory.annotation.Value
+import org.liftrr.common.InvalidGoogleTokenException
 import org.springframework.stereotype.Service
 
 @Service
-class GoogleTokenService(private val verifier: GoogleIdTokenVerifier) {
+class GoogleTokenService(private val verifier: GoogleIdTokenVerifier) : OAuthTokenVerifier {
 
-    /** Returns the token payload, or null if the token is invalid. */
-    fun verify(idToken: String): GoogleIdToken.Payload? =
-        verifier.verify(idToken)?.payload
+    override fun verify(idToken: String): OAuthPayload {
+        val payload = verifier.verify(idToken)?.payload
+            ?: throw InvalidGoogleTokenException()
+        return OAuthPayload(
+            email = payload.email,
+            subject = payload.subject,
+            name = payload["name"] as? String
+        )
+    }
 }

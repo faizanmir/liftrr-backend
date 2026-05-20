@@ -1,30 +1,32 @@
 package org.liftrr.auth
 
-import org.liftrr.auth.google.GoogleTokenService
+import org.liftrr.auth.google.OAuthTokenVerifier
 import org.liftrr.auth.jwt.JwtService
 import org.liftrr.auth.refresh.RefreshTokenService
+import org.liftrr.common.EmailAlreadyInUseException
+import org.liftrr.common.UserNotPersistedException
 import org.liftrr.user.User
 import org.liftrr.user.UserRepository
-import org.springframework.http.HttpStatus
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
-import org.springframework.web.server.ResponseStatusException
+import org.springframework.transaction.annotation.Transactional
 
 @Service
 class AuthService(
     private val userRepository: UserRepository,
     private val passwordEncoder: PasswordEncoder,
     private val jwtService: JwtService,
-    private val googleTokenService: GoogleTokenService,
+    private val oAuthTokenVerifier: OAuthTokenVerifier,
     private val refreshTokenService: RefreshTokenService,
     private val authenticationManager: AuthenticationManager
 ) {
 
+    @Transactional
     fun register(request: EmailPasswordRequest): AuthResponse {
         if (userRepository.existsByEmail(request.email)) {
-            throw ResponseStatusException(HttpStatus.CONFLICT, "Email already in use")
+            throw EmailAlreadyInUseException(request.email)
         }
         val user = userRepository.save(
             User(email = request.email, passwordHash = passwordEncoder.encode(request.password))
@@ -32,6 +34,7 @@ class AuthService(
         return issueTokenPair(user)
     }
 
+    @Transactional
     fun login(request: EmailPasswordRequest): AuthResponse {
         authenticationManager.authenticate(
             UsernamePasswordAuthenticationToken(request.email, request.password)
@@ -40,13 +43,13 @@ class AuthService(
         return issueTokenPair(user)
     }
 
+    @Transactional
     fun googleAuth(request: GoogleAuthRequest): AuthResponse {
-        val payload = googleTokenService.verify(request.idToken)
-            ?: throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid Google token")
+        val payload = oAuthTokenVerifier.verify(request.idToken)
 
         val user = userRepository.findByEmail(payload.email)
             ?: userRepository.save(
-                User(email = payload.email, googleId = payload.subject, name = payload["name"] as? String)
+                User(email = payload.email, googleId = payload.subject, name = payload.name)
             )
 
         if (user.googleId == null) {
@@ -56,6 +59,7 @@ class AuthService(
         return issueTokenPair(user)
     }
 
+    @Transactional
     fun refresh(request: RefreshRequest): AuthResponse {
         val newRefreshToken = refreshTokenService.rotate(request.refreshToken)
         return issueTokenPair(newRefreshToken.user)
@@ -65,8 +69,11 @@ class AuthService(
         refreshTokenService.revoke(request.refreshToken)
     }
 
-    private fun issueTokenPair(user: User): AuthResponse = AuthResponse(
-        accessToken = jwtService.generateToken(user.email, user.id),
-        refreshToken = refreshTokenService.create(user).token
-    )
+    private fun issueTokenPair(user: User): AuthResponse =
+        user.id?.let { userId ->
+            AuthResponse(
+                accessToken = jwtService.generateToken(user.email, userId),
+                refreshToken = refreshTokenService.create(user).token
+            )
+        } ?: throw UserNotPersistedException()
 }

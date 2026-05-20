@@ -3,13 +3,15 @@ package org.liftrr.auth.refresh
 import jakarta.persistence.*
 import org.liftrr.user.User
 import java.time.Instant
-import java.util.UUID
+import java.util.*
 
 @Entity
 @Table(name = "refresh_tokens")
 class RefreshToken(
-    @Id @GeneratedValue(strategy = GenerationType.UUID)
-    val id: UUID = UUID.randomUUID(),
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(nullable = false, updatable = false)
+    var id: UUID? = null,
 
     @Column(nullable = false, unique = true)
     val token: String,

@@ -9,6 +9,16 @@ import org.springframework.web.bind.annotation.RestControllerAdvice
 import org.springframework.web.server.ResponseStatusException
 import java.time.Instant
 
+private fun error(status: HttpStatus, message: String, path: String) =
+    ResponseEntity.status(status).body(
+        ErrorResponse(
+            status = status.value(),
+            error = status.reasonPhrase,
+            message = message,
+            path = path
+        )
+    )
+
 data class ErrorResponse(
     val status: Int,
     val error: String,
@@ -20,47 +30,33 @@ data class ErrorResponse(
 @RestControllerAdvice
 class GlobalExceptionHandler {
 
+    @ExceptionHandler(UserNotFoundException::class, UsernameNotFoundException::class, ProfileNotFoundException::class, WorkoutSessionNotFoundException::class)
+    fun handleNotFound(ex: RuntimeException, request: HttpServletRequest) =
+        error(HttpStatus.NOT_FOUND, ex.message ?: "Not found", request.requestURI)
+
+    @ExceptionHandler(ProfileAlreadyExistsException::class, EmailAlreadyInUseException::class)
+    fun handleConflict(ex: LiftrrException, request: HttpServletRequest) =
+        error(HttpStatus.CONFLICT, ex.message ?: "Conflict", request.requestURI)
+
+    @ExceptionHandler(InvalidObjectKeyException::class)
+    fun handleForbidden(ex: InvalidObjectKeyException, request: HttpServletRequest) =
+        error(HttpStatus.FORBIDDEN, ex.message ?: "Forbidden", request.requestURI)
+
+    @ExceptionHandler(PhotoNotFoundException::class, MediaNotFoundException::class)
+    fun handleUnprocessable(ex: LiftrrException, request: HttpServletRequest) =
+        error(HttpStatus.UNPROCESSABLE_ENTITY, ex.message ?: "Unprocessable", request.requestURI)
+
+    @ExceptionHandler(LiftrrUnauthorizedException::class)
+    fun handleUnauthorized(ex: LiftrrUnauthorizedException, request: HttpServletRequest) =
+        error(HttpStatus.UNAUTHORIZED, ex.message ?: "Unauthorized", request.requestURI)
+
+    @ExceptionHandler(UserNotPersistedException::class)
+    fun handleServerError(ex: UserNotPersistedException, request: HttpServletRequest) =
+        error(HttpStatus.INTERNAL_SERVER_ERROR, ex.message ?: "Internal error", request.requestURI)
+
     @ExceptionHandler(ResponseStatusException::class)
-    fun handleResponseStatus(
-        ex: ResponseStatusException,
-        request: HttpServletRequest
-    ): ResponseEntity<ErrorResponse> {
+    fun handleResponseStatus(ex: ResponseStatusException, request: HttpServletRequest): ResponseEntity<ErrorResponse> {
         val status = HttpStatus.valueOf(ex.statusCode.value())
-        return ResponseEntity.status(status).body(
-            ErrorResponse(
-                status = status.value(),
-                error = status.reasonPhrase,
-                message = ex.reason ?: ex.message,
-                path = request.requestURI
-            )
-        )
+        return error(status, ex.reason ?: ex.message, request.requestURI)
     }
-
-    @ExceptionHandler(UsernameNotFoundException::class)
-    fun handleUsernameNotFound(
-        ex: UsernameNotFoundException,
-        request: HttpServletRequest
-    ): ResponseEntity<ErrorResponse> =
-        ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-            ErrorResponse(
-                status = HttpStatus.NOT_FOUND.value(),
-                error = HttpStatus.NOT_FOUND.reasonPhrase,
-                message = ex.message ?: "User not found",
-                path = request.requestURI
-            )
-        )
-
-    @ExceptionHandler(Exception::class)
-    fun handleGeneric(
-        ex: Exception,
-        request: HttpServletRequest
-    ): ResponseEntity<ErrorResponse> =
-        ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-            ErrorResponse(
-                status = HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                error = HttpStatus.INTERNAL_SERVER_ERROR.reasonPhrase,
-                message = "An unexpected error occurred",
-                path = request.requestURI
-            )
-        )
 }
