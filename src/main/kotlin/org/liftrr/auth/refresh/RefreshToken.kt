@@ -6,7 +6,10 @@ import java.time.Instant
 import java.util.*
 
 @Entity
-@Table(name = "refresh_tokens")
+@Table(
+    name = "refresh_tokens",
+    indexes = [Index(name = "idx_refresh_tokens_user_id", columnList = "user_id")]
+)
 class RefreshToken(
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

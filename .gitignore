@@ -41,3 +41,15 @@ out/
 
 ### Secrets ###
 src/main/resources/application.properties
+# Added by code-review-graph
+.code-review-graph/
+
+CLAUDE.md
+AGENTS.md
+.mcp.json
+
+### Local AI tooling (contain local machine paths) ###
+.claude/
+.gemini/
+.serena/
+graphify-out/

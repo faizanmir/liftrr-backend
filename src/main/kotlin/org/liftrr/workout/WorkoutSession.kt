@@ -5,7 +5,10 @@ import org.liftrr.user.User
 import java.util.UUID
 
 @Entity
-@Table(name = "workout_sessions")
+@Table(
+    name = "workout_sessions",
+    indexes = [Index(name = "idx_workout_sessions_user_deleted", columnList = "user_id, is_deleted")]
+)
 class WorkoutSession(
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
