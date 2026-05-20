@@ -24,7 +24,11 @@ class UserPhotoController(private val userPhotoService: UserPhotoService) {
     )
     @ApiResponses(
         ApiResponse(responseCode = "200", description = "Presigned URL returned"),
-        ApiResponse(responseCode = "404", description = "Profile not found", content = [Content(schema = Schema(hidden = true))])
+        ApiResponse(
+            responseCode = "404",
+            description = "Profile not found",
+            content = [Content(schema = Schema(hidden = true))]
+        )
     )
     @PostMapping
     fun requestUploadUrl(
@@ -37,8 +41,16 @@ class UserPhotoController(private val userPhotoService: UserPhotoService) {
     )
     @ApiResponses(
         ApiResponse(responseCode = "204", description = "Photo confirmed and set"),
-        ApiResponse(responseCode = "403", description = "Object key does not belong to this user", content = [Content(schema = Schema(hidden = true))]),
-        ApiResponse(responseCode = "422", description = "Photo not found in storage", content = [Content(schema = Schema(hidden = true))])
+        ApiResponse(
+            responseCode = "403",
+            description = "Object key does not belong to this user",
+            content = [Content(schema = Schema(hidden = true))]
+        ),
+        ApiResponse(
+            responseCode = "422",
+            description = "Photo not found in storage",
+            content = [Content(schema = Schema(hidden = true))]
+        )
     )
     @PatchMapping
     @ResponseStatus(HttpStatus.NO_CONTENT)

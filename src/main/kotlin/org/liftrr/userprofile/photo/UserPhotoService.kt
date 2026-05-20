@@ -1,28 +1,28 @@
 package org.liftrr.userprofile.photo
 
-import org.liftrr.user.UserRepository
+import org.liftrr.common.ProfileNotFoundException
+import org.liftrr.storage.MediaUploadService
+import org.liftrr.storage.StorageService
+import org.liftrr.user.UserService
 import org.liftrr.userprofile.UserProfileRepository
-import org.liftrr.userprofile.storage.R2StorageService
-import org.springframework.http.HttpStatus
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Service
-import org.springframework.web.server.ResponseStatusException
 
 @Service
 class UserPhotoService(
-    private val userRepository: UserRepository,
-    private val userProfileRepository: UserProfileRepository,
-    private val r2StorageService: R2StorageService
+    private val userService: UserService,
+    @Qualifier("photoStorage") private val storageService: StorageService,
+    @Qualifier("photoMediaUpload") private val mediaUploadService: MediaUploadService,
+    private val userProfileRepository: UserProfileRepository
 ) {
 
+    companion object {
+        private const val NAMESPACE = "profiles"
+    }
+
     fun requestUploadUrl(email: String): PhotoUploadUrlResponse {
-        val user = userRepository.findByEmail(email)
-            ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "User not found")
-
-        userProfileRepository.findByUserId(user.id)
-            ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Profile not found")
-
-        val uploadTarget = r2StorageService.generateProfilePhotoUploadUrl(user.id)
-
+        val (_, userId) = userService.resolveUser(email)
+        val uploadTarget = mediaUploadService.requestUpload("$NAMESPACE/$userId", "image/*")
         return PhotoUploadUrlResponse(
             presignedUploadUrl = uploadTarget.presignedUploadUrl,
             objectKey = uploadTarget.objectKey
@@ -30,22 +30,14 @@ class UserPhotoService(
     }
 
     fun confirmUpload(email: String, objectKey: String) {
-        val user = userRepository.findByEmail(email)
-            ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "User not found")
+        val (_, userId) = userService.resolveUser(email)
+        mediaUploadService.verifyUpload("$NAMESPACE/$userId", objectKey)
 
-        if (!objectKey.startsWith("profiles/${user.id}/")) {
-            throw ResponseStatusException(HttpStatus.FORBIDDEN, "Invalid object key")
-        }
+        val profile = userProfileRepository.findByUserId(userId)
+            ?: throw ProfileNotFoundException(userId)
 
-        if (!r2StorageService.objectExists(objectKey)) {
-            throw ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Photo not found in storage — upload may have failed")
-        }
-
-        val profile = userProfileRepository.findByUserId(user.id)
-            ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Profile not found")
-
-        profile.photoUrl?.let { r2StorageService.deleteProfilePhoto(it) }
-        profile.photoUrl = r2StorageService.publicUrlFor(objectKey)
+        profile.photoUrl?.let { storageService.delete(storageService.objectKeyFromUrl(it)) }
+        profile.photoUrl = storageService.publicUrlFor(objectKey)
         userProfileRepository.save(profile)
     }
 }

@@ -1,30 +1,26 @@
 package org.liftrr.userprofile.storage
 
-import org.springframework.beans.factory.annotation.Value
-import org.springframework.stereotype.Service
-import software.amazon.awssdk.services.s3.model.DeleteObjectRequest
+import org.liftrr.storage.StorageService
+import org.liftrr.storage.UploadTarget
 import software.amazon.awssdk.services.s3.S3Client
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest
+import software.amazon.awssdk.services.s3.model.PutObjectRequest
 import software.amazon.awssdk.services.s3.presigner.S3Presigner
 import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest
-import software.amazon.awssdk.services.s3.model.PutObjectRequest
 import java.time.Duration
-import java.util.UUID
 
-@Service
 class R2StorageService(
     private val s3Client: S3Client,
     private val s3Presigner: S3Presigner,
-    @param:Value("\${r2.bucket}") private val bucket: String,
-    @param:Value("\${r2.public-url}") private val publicUrl: String
-) {
+    private val bucket: String,
+    private val publicUrl: String
+) : StorageService {
 
     companion object {
         private val PRESIGN_DURATION: Duration = Duration.ofMinutes(15)
     }
 
-    fun generateProfilePhotoUploadUrl(userId: UUID): UploadTarget {
-        val objectKey = "profiles/$userId/${UUID.randomUUID()}"
-
+    override fun generateUploadUrl(objectKey: String, contentType: String): UploadTarget {
         val presignedUrl = s3Presigner.presignPutObject(
             PutObjectPresignRequest.builder()
                 .signatureDuration(PRESIGN_DURATION)
@@ -32,7 +28,7 @@ class R2StorageService(
                     PutObjectRequest.builder()
                         .bucket(bucket)
                         .key(objectKey)
-                        .contentType("image/*")
+                        .contentType(contentType)
                         .build()
                 )
                 .build()
@@ -45,17 +41,18 @@ class R2StorageService(
         )
     }
 
-    fun objectExists(objectKey: String): Boolean = try {
+    override fun objectExists(objectKey: String): Boolean = try {
         s3Client.headObject { it.bucket(bucket).key(objectKey) }
         true
     } catch (_: Exception) {
         false
     }
 
-    fun publicUrlFor(objectKey: String): String = "$publicUrl/$objectKey"
+    override fun publicUrlFor(objectKey: String): String = "$publicUrl/$objectKey"
 
-    fun deleteProfilePhoto(photoUrl: String) {
-        val objectKey = photoUrl.removePrefix("$publicUrl/")
+    override fun objectKeyFromUrl(url: String): String = url.removePrefix("$publicUrl/")
+
+    override fun delete(objectKey: String) {
         s3Client.deleteObject(
             DeleteObjectRequest.builder()
                 .bucket(bucket)
@@ -64,9 +61,3 @@ class R2StorageService(
         )
     }
 }
-
-data class UploadTarget(
-    val presignedUploadUrl: String,
-    val publicUrl: String,
-    val objectKey: String
-)

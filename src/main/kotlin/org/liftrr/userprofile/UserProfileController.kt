@@ -24,8 +24,16 @@ class UserProfileController(private val userProfileService: UserProfileService) 
     @Operation(summary = "Create profile", description = "Creates a profile for the authenticated user.")
     @ApiResponses(
         ApiResponse(responseCode = "201", description = "Profile created"),
-        ApiResponse(responseCode = "404", description = "Authenticated user not found", content = [Content(schema = Schema(hidden = true))]),
-        ApiResponse(responseCode = "409", description = "Profile already exists", content = [Content(schema = Schema(hidden = true))])
+        ApiResponse(
+            responseCode = "404",
+            description = "Authenticated user not found",
+            content = [Content(schema = Schema(hidden = true))]
+        ),
+        ApiResponse(
+            responseCode = "409",
+            description = "Profile already exists",
+            content = [Content(schema = Schema(hidden = true))]
+        )
     )
     @PostMapping
     fun createProfile(
@@ -38,17 +46,28 @@ class UserProfileController(private val userProfileService: UserProfileService) 
     @Operation(summary = "Get profile", description = "Returns the authenticated user's profile.")
     @ApiResponses(
         ApiResponse(responseCode = "200", description = "Profile returned"),
-        ApiResponse(responseCode = "404", description = "Profile not found", content = [Content(schema = Schema(hidden = true))])
+        ApiResponse(
+            responseCode = "404",
+            description = "Profile not found",
+            content = [Content(schema = Schema(hidden = true))]
+        )
     )
     @GetMapping
     fun fetchProfile(
         @AuthenticationPrincipal principal: UserDetails
     ): UserProfile = userProfileService.fetchProfile(principal.username)
 
-    @Operation(summary = "Update profile", description = "Partially updates the authenticated user's profile. Omitted fields retain their current values.")
+    @Operation(
+        summary = "Update profile",
+        description = "Partially updates the authenticated user's profile. Omitted fields retain their current values."
+    )
     @ApiResponses(
         ApiResponse(responseCode = "200", description = "Profile updated"),
-        ApiResponse(responseCode = "404", description = "Profile not found", content = [Content(schema = Schema(hidden = true))])
+        ApiResponse(
+            responseCode = "404",
+            description = "Profile not found",
+            content = [Content(schema = Schema(hidden = true))]
+        )
     )
     @PatchMapping
     fun editProfile(
@@ -56,10 +75,14 @@ class UserProfileController(private val userProfileService: UserProfileService) 
         @RequestBody request: UserProfileRequest
     ): UserProfile = userProfileService.editProfile(principal.username, request)
 
-@Operation(summary = "Delete profile", description = "Deletes the authenticated user's profile.")
+    @Operation(summary = "Delete profile", description = "Deletes the authenticated user's profile.")
     @ApiResponses(
         ApiResponse(responseCode = "204", description = "Profile deleted"),
-        ApiResponse(responseCode = "404", description = "Profile not found", content = [Content(schema = Schema(hidden = true))])
+        ApiResponse(
+            responseCode = "404",
+            description = "Profile not found",
+            content = [Content(schema = Schema(hidden = true))]
+        )
     )
     @DeleteMapping
     @ResponseStatus(HttpStatus.NO_CONTENT)

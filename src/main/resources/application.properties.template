@@ -23,3 +23,5 @@ r2.access-key=
 r2.secret-key=
 r2.bucket=
 r2.public-url=
+r2.video.bucket=
+r2.video.public-url=

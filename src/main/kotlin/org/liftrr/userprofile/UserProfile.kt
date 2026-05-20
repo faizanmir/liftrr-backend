@@ -5,17 +5,21 @@ import org.hibernate.annotations.OnDelete
 import org.hibernate.annotations.OnDeleteAction
 import org.liftrr.user.User
 import java.time.Instant
-import java.util.UUID
+import java.util.*
 
 @Entity
 @Table(name = "user_profiles")
 class UserProfile(
-    @Id @GeneratedValue(strategy = GenerationType.UUID)
-    val id: UUID = UUID.randomUUID(),
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(nullable = false, updatable = false)
+    var id: UUID? = null,
 
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false, unique = true,
-        foreignKey = ForeignKey(name = "fk_user_profiles_user_id"))
+    @JoinColumn(
+        name = "user_id", nullable = false, unique = true,
+        foreignKey = ForeignKey(name = "fk_user_profiles_user_id")
+    )
     @OnDelete(action = OnDeleteAction.CASCADE)
     val user: User,
 
@@ -38,5 +42,5 @@ class UserProfile(
     var lastSyncedAt: Instant? = null,
 
     @Version
-    val version: Int = 1
+    var version: Int = 0
 )

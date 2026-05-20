@@ -1,29 +1,27 @@
 package org.liftrr.userprofile
 
-import org.liftrr.user.UserRepository
+import org.liftrr.common.ProfileAlreadyExistsException
+import org.liftrr.common.ProfileNotFoundException
+import org.liftrr.user.UserService
 import org.liftrr.userprofile.dto.UserProfileRequest
 import org.liftrr.userprofile.dto.UserProfileResponse
-import org.liftrr.userprofile.storage.R2StorageService
-import org.springframework.http.HttpStatus
+import org.liftrr.storage.StorageService
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Service
-import org.springframework.web.server.ResponseStatusException
+import java.util.UUID
 
 @Service
 class UserProfileService(
     private val userProfileRepository: UserProfileRepository,
-    private val userRepository: UserRepository,
-    private val r2StorageService: R2StorageService
+    private val userService: UserService,
+    @Qualifier("photoStorage") private val storageService: StorageService
 ) {
 
     fun createProfile(email: String, request: UserProfileRequest): UserProfileResponse {
-        val user = userRepository.findByEmail(email)
-            ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "User not found")
+        val (user, userId) = userService.resolveUser(email)
 
-        if (userProfileRepository.findByUserId(user.id) != null) {
-            throw ResponseStatusException(HttpStatus.CONFLICT, "Profile already exists")
-        }
-
-        val uploadTarget = r2StorageService.generateProfilePhotoUploadUrl(user.id)
+        val objectKey = "profiles/$userId/${UUID.randomUUID()}"
+        val uploadTarget = storageService.generateUploadUrl(objectKey, "image/*")
 
         userProfileRepository.save(
             UserProfile(
@@ -40,19 +38,15 @@ class UserProfileService(
     }
 
     fun fetchProfile(email: String): UserProfile {
-        val user = userRepository.findByEmail(email)
-            ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "User not found")
-
-        return userProfileRepository.findByUserId(user.id)
-            ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Profile not found")
+        val (_, userId) = userService.resolveUser(email)
+        return userProfileRepository.findByUserId(userId) ?: throw ProfileNotFoundException(userId)
     }
 
     fun editProfile(email: String, request: UserProfileRequest): UserProfile {
-        val user = userRepository.findByEmail(email)
-            ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "User not found")
+        val (_, userId) = userService.resolveUser(email)
 
-        val profile = userProfileRepository.findByUserId(user.id)
-            ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Profile not found")
+        val profile = userProfileRepository.findByUserId(userId)
+            ?: throw ProfileNotFoundException(userId)
 
         profile.firstName = request.firstName ?: profile.firstName
         profile.lastName = request.lastName ?: profile.lastName
@@ -60,11 +54,10 @@ class UserProfileService(
     }
 
     fun deleteProfile(email: String) {
-        val user = userRepository.findByEmail(email)
-            ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "User not found")
+        val (_, userId) = userService.resolveUser(email)
 
-        val profile = userProfileRepository.findByUserId(user.id)
-            ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Profile not found")
+        val profile = userProfileRepository.findByUserId(userId)
+            ?: throw ProfileNotFoundException(userId)
 
         userProfileRepository.delete(profile)
     }

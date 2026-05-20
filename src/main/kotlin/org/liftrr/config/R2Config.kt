@@ -1,5 +1,8 @@
 package org.liftrr.config
 
+import org.liftrr.storage.MediaUploadService
+import org.liftrr.storage.StorageService
+import org.liftrr.userprofile.storage.R2StorageService
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -14,7 +17,11 @@ import java.net.URI
 class R2Config(
     @param:Value("\${r2.account-id}") private val accountId: String,
     @param:Value("\${r2.access-key}") private val accessKey: String,
-    @param:Value("\${r2.secret-key}") private val secretKey: String
+    @param:Value("\${r2.secret-key}") private val secretKey: String,
+    @param:Value("\${r2.bucket}") private val photoBucket: String,
+    @param:Value("\${r2.public-url}") private val photoPublicUrl: String,
+    @param:Value("\${r2.video.bucket}") private val videoBucket: String,
+    @param:Value("\${r2.video.public-url}") private val videoPublicUrl: String
 ) {
 
     private val endpoint: URI
@@ -38,4 +45,20 @@ class R2Config(
         .credentialsProvider(credentials)
         .region(Region.of("auto"))
         .build()
+
+    @Bean("photoStorage")
+    fun photoStorageService(s3Client: S3Client, s3Presigner: S3Presigner): StorageService =
+        R2StorageService(s3Client, s3Presigner, photoBucket, photoPublicUrl)
+
+    @Bean("videoStorage")
+    fun videoStorageService(s3Client: S3Client, s3Presigner: S3Presigner): StorageService =
+        R2StorageService(s3Client, s3Presigner, videoBucket, videoPublicUrl)
+
+    @Bean("photoMediaUpload")
+    fun photoMediaUploadService(@org.springframework.beans.factory.annotation.Qualifier("photoStorage") storage: StorageService): MediaUploadService =
+        MediaUploadService(storage)
+
+    @Bean("videoMediaUpload")
+    fun videoMediaUploadService(@org.springframework.beans.factory.annotation.Qualifier("videoStorage") storage: StorageService): MediaUploadService =
+        MediaUploadService(storage)
 }
