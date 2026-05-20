@@ -23,3 +23,12 @@ data class AuthResponse(
     @param:Schema(description = "Short-lived JWT access token (15 min). Send as 'Authorization: Bearer <token>'") val accessToken: String,
     @param:Schema(description = "Long-lived refresh token (7 days). Store securely and use to obtain new access tokens.") val refreshToken: String
 )
+
+@Schema(description = "Authenticated user identity")
+data class CurrentUserResponse(
+    @param:Schema(description = "Backend user ID") val userId: String,
+    @param:Schema(description = "User email") val email: String,
+    @param:Schema(description = "Display/name from account provider") val name: String?,
+    @param:Schema(description = "Whether this account is linked to Google") val hasGoogleAuth: Boolean,
+    @param:Schema(description = "Whether this account has email/password auth") val hasPasswordAuth: Boolean
+)

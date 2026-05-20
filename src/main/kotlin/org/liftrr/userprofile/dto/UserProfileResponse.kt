@@ -1,6 +1,25 @@
 package org.liftrr.userprofile.dto
 
 data class UserProfileResponse(
-    val success: Boolean,
-    val photoUploadUrl: String,
+    val userId: String,
+    val profileId: String?,
+    val email: String,
+    val firstName: String?,
+    val lastName: String?,
+    val photoUrl: String?,
+    val gender: String?,
+    val height: Float?,
+    val fitnessLevel: String?,
+    val dateOfBirth: Long?,
+    val weight: Float?,
+    val goalsJson: String?,
+    val preferredExercises: String?,
+    val preferredUnits: String?,
+    val notificationsEnabled: Boolean,
+    val reminderTime: String?,
+    val createdAt: String?,
+    val modifiedAt: String?,
+    val lastSyncedAt: String?,
+    val version: Int,
+    val photoUploadUrl: String? = null,
 )

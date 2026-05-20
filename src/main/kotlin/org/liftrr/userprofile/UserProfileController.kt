@@ -55,7 +55,7 @@ class UserProfileController(private val userProfileService: UserProfileService) 
     @GetMapping
     fun fetchProfile(
         @AuthenticationPrincipal principal: UserDetails
-    ): UserProfile = userProfileService.fetchProfile(principal.username)
+    ): UserProfileResponse = userProfileService.fetchProfile(principal.username)
 
     @Operation(
         summary = "Update profile",
@@ -73,7 +73,7 @@ class UserProfileController(private val userProfileService: UserProfileService) 
     fun editProfile(
         @AuthenticationPrincipal principal: UserDetails,
         @RequestBody request: UserProfileRequest
-    ): UserProfile = userProfileService.editProfile(principal.username, request)
+    ): UserProfileResponse = userProfileService.editProfile(principal.username, request)
 
     @Operation(summary = "Delete profile", description = "Deletes the authenticated user's profile.")
     @ApiResponses(

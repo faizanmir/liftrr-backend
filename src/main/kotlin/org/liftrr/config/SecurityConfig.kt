@@ -4,6 +4,7 @@ import org.liftrr.auth.jwt.JwtAuthFilter
 import org.liftrr.user.UserDetailsServiceImpl
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.http.HttpMethod
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration
@@ -27,7 +28,11 @@ class SecurityConfig(
         http
             .csrf { it.disable() }
             .authorizeHttpRequests {
-                it.requestMatchers("/api/v1/auth/**").permitAll()
+                it.requestMatchers(HttpMethod.POST, "/api/v1/auth/register").permitAll()
+                    .requestMatchers(HttpMethod.POST, "/api/v1/auth/login").permitAll()
+                    .requestMatchers(HttpMethod.POST, "/api/v1/auth/google").permitAll()
+                    .requestMatchers(HttpMethod.POST, "/api/v1/auth/refresh").permitAll()
+                    .requestMatchers(HttpMethod.POST, "/api/v1/auth/logout").permitAll()
                     .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                     .anyRequest().authenticated()
             }

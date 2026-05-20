@@ -69,6 +69,19 @@ class AuthService(
         refreshTokenService.revoke(request.refreshToken)
     }
 
+    fun currentUser(email: String): CurrentUserResponse {
+        val user = userRepository.findByEmail(email)
+            ?: throw org.liftrr.common.UserNotFoundException(email)
+        val userId = user.id ?: throw UserNotPersistedException()
+        return CurrentUserResponse(
+            userId = userId.toString(),
+            email = user.email,
+            name = user.name,
+            hasGoogleAuth = user.googleId != null,
+            hasPasswordAuth = user.passwordHash != null
+        )
+    }
+
     private fun issueTokenPair(user: User): AuthResponse =
         user.id?.let { userId ->
             AuthResponse(

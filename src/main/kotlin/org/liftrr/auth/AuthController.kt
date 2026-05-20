@@ -8,6 +8,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.security.core.annotation.AuthenticationPrincipal
+import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.web.bind.annotation.*
 
 @RestController
@@ -88,4 +90,20 @@ class AuthController(private val authService: AuthService) {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     fun logout(@RequestBody request: RefreshRequest) =
         authService.logout(request)
+
+    @Operation(
+        summary = "Get current user",
+        description = "Returns identity for the authenticated Liftrr access token."
+    )
+    @ApiResponses(
+        ApiResponse(responseCode = "200", description = "Current user returned"),
+        ApiResponse(
+            responseCode = "401",
+            description = "Missing or invalid access token",
+            content = [Content(schema = Schema(hidden = true))]
+        )
+    )
+    @GetMapping("/me")
+    fun me(@AuthenticationPrincipal principal: UserDetails): CurrentUserResponse =
+        authService.currentUser(principal.username)
 }

@@ -32,6 +32,36 @@ class UserProfile(
     @Column
     var photoUrl: String? = null,
 
+    @Column
+    var gender: String? = null,
+
+    @Column
+    var height: Float? = null,
+
+    @Column
+    var fitnessLevel: String? = null,
+
+    @Column
+    var dateOfBirth: Long? = null,
+
+    @Column
+    var weight: Float? = null,
+
+    @Column(columnDefinition = "TEXT")
+    var goalsJson: String? = null,
+
+    @Column
+    var preferredExercises: String? = null,
+
+    @Column
+    var preferredUnits: String? = null,
+
+    @Column(nullable = false)
+    var notificationsEnabled: Boolean = true,
+
+    @Column
+    var reminderTime: String? = null,
+
     @Column(nullable = false, updatable = false)
     val createdAt: Instant = Instant.now(),
 
