@@ -1,4 +1,6 @@
 package org.liftrr.workout.video
 
-class VideoUploadResponse {
-}
+data class VideoUploadResponse(
+    val presignedUploadUrl: String,
+    val objectKey: String
+)

@@ -1,17 +1,24 @@
 package org.liftrr.workout
 
-import jakarta.annotation.Generated
-import jakarta.persistence.GeneratedValue
-import jakarta.persistence.GenerationType
-import jakarta.persistence.Id
+import jakarta.persistence.*
+import org.liftrr.user.User
 import java.util.UUID
 
-data class WorkoutSessionEntity(
-    @Id @GeneratedValue(strategy = GenerationType.UUID)
-    val id: UUID,
+@Entity
+@Table(name = "workout_sessions")
+class WorkoutSession(
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(nullable = false, updatable = false)
+    var id: UUID? = null,
 
-    // Core workout data
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    val user: User,
+
+    @Column(nullable = false)
     val exerciseType: String,
+
     val totalReps: Int,
     val goodReps: Int,
     val badReps: Int,
@@ -22,17 +29,19 @@ data class WorkoutSessionEntity(
     val weight: Float?,
     val timestamp: Long,
 
+    @Column(columnDefinition = "TEXT")
     val repDataJson: String? = null,
-    val keyFramesJson: String? = null,       // Serialized list of KeyFrame objects
 
-    // Cloud storage URLs
-    val videoCloudUrl: String? = null,       // S3/Cloud Storage URL
-    val keyFramesCloudUrls: String? = null,  // JSON array of cloud URLs
+    @Column(columnDefinition = "TEXT")
+    val keyFramesJson: String? = null,
 
-    // User association
-    val userId: String,                       // Owner of this workout
+    @Column(columnDefinition = "TEXT")
+    val keyFramesCloudUrls: String? = null,
 
-    // Sync tracking
-    val lastSyncedAt: Long? = null,          // Timestamp of last successful sync
-    val version: Int = 1,                    // For optimistic locking/conflict resolution
+    var videoCloudUrl: String? = null,
+
+    val createdAt: Long = System.currentTimeMillis(),
+
+    var isDeleted: Boolean = false,
+    var deletedAt: Long? = null
 )
